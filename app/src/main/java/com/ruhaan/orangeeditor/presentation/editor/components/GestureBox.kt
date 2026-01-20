@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
+import com.ruhaan.orangeeditor.Constant.LAYER_ROTATION_SNAP_THRESHOLD
 import com.ruhaan.orangeeditor.domain.model.format.AlignmentConstants
 import com.ruhaan.orangeeditor.domain.model.layer.EditorState
 import com.ruhaan.orangeeditor.domain.model.layer.ImageLayer
@@ -16,6 +17,8 @@ import com.ruhaan.orangeeditor.domain.model.layer.TextLayer
 import com.ruhaan.orangeeditor.domain.model.layer.Transform
 import com.ruhaan.orangeeditor.domain.model.layer.isIntersect
 import com.ruhaan.orangeeditor.util.snapToGuides
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @Composable
 fun GestureBox(
@@ -103,6 +106,7 @@ fun GestureBox(
                       val newX = currentLayer.transform.x + pan.x
                       val newY = currentLayer.transform.y + pan.y
                       val newScale = (currentLayer.transform.scale * zoom).coerceIn(0.1f, 2f)
+                      val newRotation = currentLayer.transform.rotation + rotation
 
                       val snapX =
                           snapToGuides(
@@ -128,7 +132,7 @@ fun GestureBox(
                               x = snapX,
                               y = snapY,
                               scale = newScale,
-                              rotation = currentLayer.transform.rotation + rotation,
+                              rotation = newRotation,
                           )
 
                       val updated =
@@ -141,6 +145,18 @@ fun GestureBox(
                     },
                     onGestureEnd = {
                       onDragStateChange(false) // NOW THIS GETS CALLED
+
+                      val snappedRotation = snapToNearest90(currentLayer.transform.rotation)
+
+                      val snappedTransform = currentLayer.transform.copy(rotation = snappedRotation)
+
+                      val updated =
+                          when (val layer = currentLayer) {
+                            is ImageLayer -> layer.copy(transform = snappedTransform)
+                            is TextLayer -> layer.copy(transform = snappedTransform)
+                          }
+
+                      onUpdateLayer(updated)
                     },
                 )
               }
@@ -157,3 +173,8 @@ fun detectTappedLayer(
         .filter { it.visible }
         .sortedByDescending { it.zIndex } // top-most first
         .firstOrNull { layer -> layer.isIntersect(tapX = tapX, tapY = tapY) }
+
+fun snapToNearest90(angle: Float, threshold: Float = LAYER_ROTATION_SNAP_THRESHOLD): Float {
+  val snapped = (angle / 90f).roundToInt() * 90f
+  return if (abs(angle - snapped) <= threshold) snapped else angle
+}

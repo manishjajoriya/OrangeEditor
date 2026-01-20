@@ -54,7 +54,7 @@ fun NavGraph(
           backPressedOnce = true
           Toast.makeText(
                   context,
-                  "Press back again to exit and discard changes",
+                  "Press back again to exit and save changes to draft",
                   Toast.LENGTH_SHORT,
               )
               .show()
