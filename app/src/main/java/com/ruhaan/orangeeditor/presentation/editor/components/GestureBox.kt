@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.ruhaan.orangeeditor.Constant.LAYER_ROTATION_SNAP_THRESHOLD
 import com.ruhaan.orangeeditor.domain.model.format.AlignmentConstants
@@ -15,7 +17,7 @@ import com.ruhaan.orangeeditor.domain.model.layer.Layer
 import com.ruhaan.orangeeditor.domain.model.layer.LayerBounds
 import com.ruhaan.orangeeditor.domain.model.layer.TextLayer
 import com.ruhaan.orangeeditor.domain.model.layer.Transform
-import com.ruhaan.orangeeditor.domain.model.layer.isIntersect
+import com.ruhaan.orangeeditor.domain.model.layer.isIntersectWithMinTarget
 import com.ruhaan.orangeeditor.util.snapToGuides
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -37,8 +39,11 @@ fun GestureBox(
 ) {
   val selectedLayerId = state.selectedLayerId
   val selectedLayer = state.layers.firstOrNull { it.id == selectedLayerId } ?: return
+  val density = LocalDensity.current
 
+  var activeLayerId by remember { mutableStateOf<String?>(null) }
   val currentLayer by rememberUpdatedState(selectedLayer)
+  val currentState by rememberUpdatedState(state)
 
   // Calculate layer bounds (in px) from currentLayer
   val layerBounds by
@@ -70,6 +75,7 @@ fun GestureBox(
                               layers = state.layers,
                               tapX = offset.x,
                               tapY = offset.y,
+                              density = density,
                           )
 
                       if (tappedLayer != null) onLayerTapped(tappedLayer.id)
@@ -81,6 +87,7 @@ fun GestureBox(
                               layers = state.layers,
                               tapX = offset.x,
                               tapY = offset.y,
+                              density = density,
                           )
 
                       when (tappedLayer) {
@@ -101,12 +108,29 @@ fun GestureBox(
               }
               .pointerInput(Unit) {
                 detectTransformGesturesWithEnd(
-                    onGestureStart = { onDragStateChange(true) },
+                    onGestureStart = { centroid ->
+                      onDragStateChange(true)
+                      val tappedLayer =
+                          detectTappedLayer(
+                              layers = currentState.layers,
+                              tapX = centroid.x,
+                              tapY = centroid.y,
+                              density = density,
+                          )
+
+                      activeLayerId = tappedLayer?.id
+                    },
                     onGesture = { _, pan, zoom, rotation ->
-                      val newX = currentLayer.transform.x + pan.x
-                      val newY = currentLayer.transform.y + pan.y
-                      val newScale = (currentLayer.transform.scale * zoom).coerceIn(0.1f, 2f)
-                      val newRotation = currentLayer.transform.rotation + rotation
+                      val layerId = activeLayerId ?: return@detectTransformGesturesWithEnd
+
+                      val localActionLayer =
+                          currentState.layers.firstOrNull { it.id == layerId }
+                              ?: return@detectTransformGesturesWithEnd
+
+                      val newX = localActionLayer.transform.x + pan.x
+                      val newY = localActionLayer.transform.y + pan.y
+                      val newScale = (localActionLayer.transform.scale * zoom).coerceIn(0.1f, 2f)
+                      val newRotation = localActionLayer.transform.rotation + rotation
 
                       val snapX =
                           snapToGuides(
@@ -136,9 +160,9 @@ fun GestureBox(
                           )
 
                       val updated =
-                          when (val layer = currentLayer) {
-                            is ImageLayer -> layer.copy(transform = newTransform)
-                            is TextLayer -> layer.copy(transform = newTransform)
+                          when (localActionLayer) {
+                            is ImageLayer -> localActionLayer.copy(transform = newTransform)
+                            is TextLayer -> localActionLayer.copy(transform = newTransform)
                           }
 
                       onUpdateLayer(updated)
@@ -163,16 +187,14 @@ fun GestureBox(
   )
 }
 
-fun detectTappedLayer(
-    layers: List<Layer>,
-    tapX: Float,
-    tapY: Float,
-): Layer? =
+fun detectTappedLayer(layers: List<Layer>, tapX: Float, tapY: Float, density: Density): Layer? =
     layers
         .asSequence()
         .filter { it.visible }
         .sortedByDescending { it.zIndex } // top-most first
-        .firstOrNull { layer -> layer.isIntersect(tapX = tapX, tapY = tapY) }
+        .firstOrNull { layer ->
+          layer.isIntersectWithMinTarget(tapX = tapX, tapY = tapY, density = density)
+        }
 
 fun snapToNearest90(angle: Float, threshold: Float = LAYER_ROTATION_SNAP_THRESHOLD): Float {
   val snapped = (angle / 90f).roundToInt() * 90f

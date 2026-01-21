@@ -128,7 +128,7 @@ fun AddTextSheet(
               modifier =
                   Modifier.clip(shape)
                       .then(
-                          if (selectedFontWeight == fontWeight)
+                          if (selectedFontWeight == fontWeight.first)
                               Modifier.border(2.dp, CanvasOrange, shape)
                           else Modifier
                       ),
