@@ -127,10 +127,10 @@ fun GestureBox(
                           currentState.layers.firstOrNull { it.id == layerId }
                               ?: return@detectTransformGesturesWithEnd
 
-                      val newX = currentLayer.transform.x + pan.x
-                      val newY = currentLayer.transform.y + pan.y
-                      val newScale = (currentLayer.transform.scale * zoom).coerceIn(0.1f, 2f)
-                      val newRotation = currentLayer.transform.rotation + rotation
+                      val newX = localActionLayer.transform.x + pan.x
+                      val newY = localActionLayer.transform.y + pan.y
+                      val newScale = (localActionLayer.transform.scale * zoom).coerceIn(0.1f, 2f)
+                      val newRotation = localActionLayer.transform.rotation + rotation
 
                       val snapX =
                           snapToGuides(
