@@ -1,6 +1,7 @@
 package com.ruhaan.orangeeditor.util
 
 import android.graphics.Bitmap
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
@@ -11,6 +12,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.graphics.createBitmap
+import androidx.core.graphics.toColorInt
 import androidx.core.graphics.withSave
 import com.ruhaan.orangeeditor.domain.model.layer.ImageFilter
 import com.ruhaan.orangeeditor.domain.model.layer.ImageLayer
@@ -18,7 +20,6 @@ import com.ruhaan.orangeeditor.domain.model.layer.Layer
 import com.ruhaan.orangeeditor.domain.model.layer.NeutralAdjustment
 import com.ruhaan.orangeeditor.domain.model.layer.TextLayer
 import com.ruhaan.orangeeditor.domain.model.layer.toColorMatrix
-import com.ruhaan.orangeeditor.presentation.theme.CanvasOrange
 
 class EditorRenderer {
 
@@ -88,23 +89,60 @@ class EditorRenderer {
         )
 
         if (selectedLayerId == layer.id) {
-          val borderPaint =
-              Paint().apply {
-                style = Paint.Style.STROKE
-                strokeWidth = 10f / t.scale
-                color = CanvasOrange.toArgb()
-                isAntiAlias = true
-              }
-
-          // Image bounds (center-anchored)
+          val t = layer.transform
           val halfW = newBitmap.width / 2f
           val halfH = newBitmap.height / 2f
 
-          drawRect(-(halfW + 10), -(halfH + 10), (halfW + 10), (halfH + 10), borderPaint)
+          val padding = 0f // distance from content to border
+          val cornerRadius = 6f / t.scale
+
+          // 1. Outer soft glow (shadow-like)
+          val glowPaint =
+              Paint().apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 2f / t.scale
+                color = "#0892d0".toColorInt().applyLightness(0.6f)
+                isAntiAlias = true
+                maskFilter = BlurMaskFilter(8f / t.scale, BlurMaskFilter.Blur.NORMAL)
+              }
+          drawRoundRect(
+              -(halfW + padding + 2f),
+              -(halfH + padding + 2f),
+              +(halfW + padding + 2f),
+              +(halfH + padding + 2f),
+              cornerRadius,
+              cornerRadius,
+              glowPaint,
+          )
+
+          // 2. Main blue stroke (like Figma)
+          val borderPaint =
+              Paint().apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 3f / t.scale
+                color = "#0062ff".toColorInt() // Figma blue
+                isAntiAlias = true
+              }
+          drawRoundRect(
+              -(halfW + padding),
+              -(halfH + padding),
+              +(halfW + padding),
+              +(halfH + padding),
+              cornerRadius,
+              cornerRadius,
+              borderPaint,
+          )
         }
       }
     }
     return canvas
+  }
+
+  fun Int.applyLightness(factor: Float): Int {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(this, hsv)
+    hsv[2] = (hsv[2] * factor).coerceIn(0f, 1f)
+    return android.graphics.Color.HSVToColor(hsv)
   }
 
   private fun resolveTypeface(
