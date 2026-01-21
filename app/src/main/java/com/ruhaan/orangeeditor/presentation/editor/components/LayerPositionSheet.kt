@@ -72,7 +72,7 @@ fun LayerPositionSheet(
       ) {
         Text(
             text = "Layers",
-            style = Typography.titleMedium,
+            style = Typography.headlineSmall,
         )
         Button(
             onClick = onDismissRequest,
