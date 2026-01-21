@@ -93,7 +93,7 @@ class EditorRenderer {
           val halfW = newBitmap.width / 2f
           val halfH = newBitmap.height / 2f
 
-          val padding = 10f // distance from content to border
+          val padding = 0f // distance from content to border
           val cornerRadius = 6f / t.scale
 
           // 1. Outer soft glow (shadow-like)
@@ -119,7 +119,7 @@ class EditorRenderer {
           val borderPaint =
               Paint().apply {
                 style = Paint.Style.STROKE
-                strokeWidth = 2f / t.scale
+                strokeWidth = 3f / t.scale
                 color = "#0062ff".toColorInt() // Figma blue
                 isAntiAlias = true
               }
