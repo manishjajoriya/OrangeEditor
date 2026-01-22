@@ -33,28 +33,28 @@ fun GestureBox(
     onTapped: () -> Unit,
     onTextLayerEdit: (TextLayer) -> Unit,
     onDoubleTap: () -> Unit,
-    onLayerTapped: (String) -> Unit,
+    onLayerTapped: (String?) -> Unit,
     onDragStateChange: (Boolean) -> Unit,
     onLayerBoundsChange: (LayerBounds?) -> Unit,
 ) {
-  val selectedLayerId = state.selectedLayerId
-  val selectedLayer = state.layers.firstOrNull { it.id == selectedLayerId } ?: return
-  val density = LocalDensity.current
-
-  var activeLayerId by remember { mutableStateOf<String?>(null) }
-  val currentLayer by rememberUpdatedState(selectedLayer)
   val currentState by rememberUpdatedState(state)
+  var activeLayerId by remember { mutableStateOf<String?>(null) }
+  val density = LocalDensity.current
 
   // Calculate layer bounds (in px) from currentLayer
   val layerBounds by
-      remember(currentLayer) {
+      remember(activeLayerId) {
         derivedStateOf {
-          val bitmap = currentLayer.bitmap ?: return@derivedStateOf null
-          val w = bitmap.width * currentLayer.transform.scale
-          val h = bitmap.height * currentLayer.transform.scale
+          val layerId = activeLayerId ?: return@derivedStateOf null
+          val localActionLayer =
+              currentState.layers.firstOrNull { it.id == layerId } ?: return@derivedStateOf null
+
+          val bitmap = localActionLayer.bitmap ?: return@derivedStateOf null
+          val w = bitmap.width * localActionLayer.transform.scale
+          val h = bitmap.height * localActionLayer.transform.scale
           LayerBounds(
-              centerX = currentLayer.transform.x,
-              centerY = currentLayer.transform.y,
+              centerX = localActionLayer.transform.x,
+              centerY = localActionLayer.transform.y,
               width = w,
               height = h,
           )
@@ -78,8 +78,7 @@ fun GestureBox(
                               density = density,
                           )
 
-                      if (tappedLayer != null) onLayerTapped(tappedLayer.id)
-                      onTapped()
+                      if (tappedLayer != null) onLayerTapped(tappedLayer.id) else onTapped()
                     },
                     onDoubleTap = { offset ->
                       val tappedLayer =
@@ -91,17 +90,12 @@ fun GestureBox(
                           )
 
                       when (tappedLayer) {
-                        null -> onDoubleTap()
-
                         is TextLayer -> {
                           onTextLayerEdit(tappedLayer)
                           onLayerTapped(tappedLayer.id)
                         }
 
-                        else -> {
-                          onDoubleTap()
-                          onLayerTapped(tappedLayer.id)
-                        }
+                        else -> onDoubleTap()
                       }
                     },
                 )
@@ -118,6 +112,7 @@ fun GestureBox(
                               density = density,
                           )
 
+                      onLayerTapped(tappedLayer?.id)
                       activeLayerId = tappedLayer?.id
                     },
                     onGesture = { _, pan, zoom, rotation ->
@@ -170,14 +165,21 @@ fun GestureBox(
                     onGestureEnd = {
                       onDragStateChange(false) // NOW THIS GETS CALLED
 
-                      val snappedRotation = snapToNearest90(currentLayer.transform.rotation)
+                      val layerId = activeLayerId ?: return@detectTransformGesturesWithEnd
 
-                      val snappedTransform = currentLayer.transform.copy(rotation = snappedRotation)
+                      val localActionLayer =
+                          currentState.layers.firstOrNull { it.id == layerId }
+                              ?: return@detectTransformGesturesWithEnd
+
+                      val snappedRotation = snapToNearest90(localActionLayer.transform.rotation)
+
+                      val snappedTransform =
+                          localActionLayer.transform.copy(rotation = snappedRotation)
 
                       val updated =
-                          when (val layer = currentLayer) {
-                            is ImageLayer -> layer.copy(transform = snappedTransform)
-                            is TextLayer -> layer.copy(transform = snappedTransform)
+                          when (localActionLayer) {
+                            is ImageLayer -> localActionLayer.copy(transform = snappedTransform)
+                            is TextLayer -> localActionLayer.copy(transform = snappedTransform)
                           }
 
                       onUpdateLayer(updated)
