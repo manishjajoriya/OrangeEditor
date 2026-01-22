@@ -305,49 +305,58 @@ fun EditorCanvas(
                   isItalic = textLayer.fontStyle == FontStyle.Italic
                 },
                 onImageLayerLongPress = { layerId -> viewModel.showDeleteIconFor(layerId) },
-                viewModel = viewModel
+                viewModel = viewModel,
             )
 
             // Delete icon overlay (sticks to top-right of image layer)
             viewModel.showDeleteIconForLayer.value?.let { layerId ->
-              val imageLayer =
-                  state.layers.firstOrNull { it.id == layerId && it is ImageLayer } as? ImageLayer
-              imageLayer?.run {
-                val bitmap = this.bitmap ?: return@run
-                val transform = this.transform
+              val layer = state.layers.firstOrNull { it.id == layerId } ?: return@let
+              val transform = layer.transform
 
-                // Size of the image in canvas coordinates
-                val width = bitmap.width * transform.scale
-                val height = bitmap.height * transform.scale
+              val bitmapSize =
+                  when (layer) {
+                    is ImageLayer -> {
+                      val bitmap = layer.bitmap ?: return@let
+                      IntSize(bitmap.width, bitmap.height)
+                    }
+                    is TextLayer -> {
+                      val bitmap = layer.bitmap ?: return@let
+                      IntSize(bitmap.width, bitmap.height)
+                    }
+                  }
 
-                // Position at top-right corner of the image
-                val iconX = transform.x + (width / 2f)
-                val iconY = transform.y - (height / 2f)
+              val width = bitmapSize.width * transform.scale
+              val height = bitmapSize.height * transform.scale
 
-                Box(
-                    modifier =
-                        Modifier.offset(
-                                x = with(density) { iconX.toDp() },
-                                y = with(density) { iconY.toDp() },
-                            )
-                            .size(20.dp)
-                            .background(Color(0xFFE53935), shape = CircleShape) // Red background
-                            .clickable(
-                                enabled = true,
-                                onClick = {
-                                  viewModel.removeLayer(layerId)
-                                  viewModel.hideDeleteIcon()
-                                },
-                            ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                  Icon(
-                      painter = painterResource(id = R.drawable.ic_cancel2),
-                      contentDescription = "Delete Layer",
-                      tint = Color.White,
-                      modifier = Modifier.size(20.dp),
-                  )
-                }
+              if (width <= 0f || height <= 0f) return@let
+
+              // Position at top-right corner of the image
+              val iconX = transform.x + (width / 2f)
+              val iconY = transform.y - (height / 2f)
+
+              Box(
+                  modifier =
+                      Modifier.offset(
+                              x = with(density) { iconX.toDp() },
+                              y = with(density) { iconY.toDp() },
+                          )
+                          .size(25.dp)
+                          .background(Color(0xFFE53935), shape = CircleShape) // Red background
+                          .clickable(
+                              enabled = true,
+                              onClick = {
+                                viewModel.removeLayer(layerId)
+                                viewModel.hideDeleteIcon()
+                              },
+                          ),
+                  contentAlignment = Alignment.Center,
+              ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_cancel2),
+                    contentDescription = "Delete Layer",
+                    tint = Color.White,
+                    modifier = Modifier.size(25.dp),
+                )
               }
             }
           }

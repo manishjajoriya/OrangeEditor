@@ -117,7 +117,10 @@ fun GestureBox(
                           onLayerTapped(tappedLayer.id)
                           onImageLayerLongPress(tappedLayer.id)
                         }
-                        is TextLayer -> {}
+                          is TextLayer -> {
+                              onLayerTapped(tappedLayer.id)
+                              onImageLayerLongPress(tappedLayer.id) // Show delete icon (same as image)
+                          }
                         null -> Unit
                       }
                     },
