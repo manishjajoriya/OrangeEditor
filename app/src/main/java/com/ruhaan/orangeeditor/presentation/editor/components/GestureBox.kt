@@ -95,7 +95,9 @@ fun GestureBox(
                           onLayerTapped(tappedLayer.id)
                         }
 
-                        else -> onDoubleTap()
+                        is ImageLayer -> onLayerTapped(tappedLayer.id)
+
+                        null -> onDoubleTap()
                       }
                     },
                 )
