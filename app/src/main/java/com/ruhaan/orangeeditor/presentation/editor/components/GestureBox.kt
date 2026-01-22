@@ -18,6 +18,7 @@ import com.ruhaan.orangeeditor.domain.model.layer.LayerBounds
 import com.ruhaan.orangeeditor.domain.model.layer.TextLayer
 import com.ruhaan.orangeeditor.domain.model.layer.Transform
 import com.ruhaan.orangeeditor.domain.model.layer.isIntersectWithMinTarget
+import com.ruhaan.orangeeditor.presentation.editor.EditorViewModel
 import com.ruhaan.orangeeditor.util.snapToGuides
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -36,7 +37,8 @@ fun GestureBox(
     onLayerTapped: (String?) -> Unit,
     onDragStateChange: (Boolean) -> Unit,
     onLayerBoundsChange: (LayerBounds?) -> Unit,
-    onImageLayerDoubleTap: (String) -> Unit,
+    onImageLayerLongPress: (String) -> Unit,
+    viewModel: EditorViewModel,
 ) {
   val currentState by rememberUpdatedState(state)
   var activeLayerId by remember { mutableStateOf<String?>(null) }
@@ -96,12 +98,27 @@ fun GestureBox(
                           onLayerTapped(tappedLayer.id)
                         }
 
-                        is ImageLayer -> {
-                          onLayerTapped(tappedLayer.id)
-                          onImageLayerDoubleTap(tappedLayer.id)
-                        }
+                        is ImageLayer -> {}
 
                         null -> onDoubleTap()
+                      }
+                    },
+                    onLongPress = { offset ->
+                      val tappedLayer =
+                          detectTappedLayer(
+                              layers = state.layers,
+                              tapX = offset.x,
+                              tapY = offset.y,
+                              density = density,
+                          )
+
+                      when (tappedLayer) {
+                        is ImageLayer -> {
+                          onLayerTapped(tappedLayer.id)
+                          onImageLayerLongPress(tappedLayer.id)
+                        }
+                        is TextLayer -> {}
+                        null -> Unit
                       }
                     },
                 )
@@ -120,6 +137,10 @@ fun GestureBox(
 
                       onLayerTapped(tappedLayer?.id)
                       activeLayerId = tappedLayer?.id
+
+                      // Hide delete icon as soon as transform starts
+                      onLayerTapped(tappedLayer?.id)
+                      viewModel.hideDeleteIcon()
                     },
                     onGesture = { _, pan, zoom, rotation ->
                       val layerId = activeLayerId ?: return@detectTransformGesturesWithEnd
@@ -167,6 +188,9 @@ fun GestureBox(
                           }
 
                       onUpdateLayer(updated)
+
+                      // Hide delete icon if user starts panning/scale/rotate
+                      viewModel.hideDeleteIcon()
                     },
                     onGestureEnd = {
                       onDragStateChange(false) // NOW THIS GETS CALLED

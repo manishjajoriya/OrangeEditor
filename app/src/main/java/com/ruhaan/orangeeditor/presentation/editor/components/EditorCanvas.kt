@@ -304,7 +304,8 @@ fun EditorCanvas(
                   isBold = textLayer.fontWeight == FontWeight.Bold
                   isItalic = textLayer.fontStyle == FontStyle.Italic
                 },
-                onImageLayerDoubleTap = { layerId -> viewModel.showDeleteIconFor(layerId) },
+                onImageLayerLongPress = { layerId -> viewModel.showDeleteIconFor(layerId) },
+                viewModel = viewModel
             )
 
             // Delete icon overlay (sticks to top-right of image layer)
