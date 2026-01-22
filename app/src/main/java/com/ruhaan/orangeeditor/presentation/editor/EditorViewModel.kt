@@ -3,6 +3,8 @@ package com.ruhaan.orangeeditor.presentation.editor
 import android.content.Context
 import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +68,9 @@ constructor(
 
   private val _exportResult = MutableStateFlow<ExportResult>(ExportResult.Idle)
   val exportResult = _exportResult.asStateFlow()
+
+  private val _showDeleteIconForLayer = mutableStateOf<String?>(null)
+  val showDeleteIconForLayer: State<String?> = _showDeleteIconForLayer
 
   fun resetState() {
     _editorState.update { it.copy(layers = emptyList(), selectedLayerId = null) }
@@ -388,6 +393,14 @@ constructor(
       _exportResult.value = ExportResult.Error("Export failed: ${e.message}")
       Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
     }
+  }
+
+  fun showDeleteIconFor(layerId: String) {
+    _showDeleteIconForLayer.value = layerId
+  }
+
+  fun hideDeleteIcon() {
+    _showDeleteIconForLayer.value = null
   }
 
   fun resetExportResult() {
