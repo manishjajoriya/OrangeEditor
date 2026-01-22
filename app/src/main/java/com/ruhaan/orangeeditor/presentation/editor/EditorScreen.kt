@@ -186,7 +186,8 @@ fun EditorScreen(
               onDeleteClick = { editorState.selectedLayerId?.let { viewModel.removeLayer(it) } },
               onDraftClick = {
                 viewModel.saveDraft()
-                navController.popBackStack()
+                navController.navigate(Route.Home.route)
+                navController.clearBackStack<String>()
               },
           )
         }
