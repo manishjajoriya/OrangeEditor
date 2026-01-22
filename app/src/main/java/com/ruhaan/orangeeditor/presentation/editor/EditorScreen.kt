@@ -242,6 +242,7 @@ fun EditorScreen(
           onUpdateLayer = viewModel::updateLayer,
           onUpdateSelectedTextLayer = viewModel::updateSelectedTextLayer,
           onLayerTapped = viewModel::selectedLayer,
+          viewModel = viewModel,
       )
       if (loadingImage) {
         Column(
