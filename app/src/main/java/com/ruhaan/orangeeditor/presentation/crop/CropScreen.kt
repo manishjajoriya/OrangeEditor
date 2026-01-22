@@ -120,14 +120,27 @@ fun CropScreen(
               onClockWiseRotate = cropController::rotateClockwise,
           )
 
-          Button(
-              onClick = {
-                onSave(cropController.crop())
-                onNavigateBack()
-              },
-              modifier = Modifier.padding(18.dp),
+          Row(
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+              horizontalArrangement = Arrangement.SpaceEvenly,
+              verticalAlignment = Alignment.CenterVertically,
           ) {
-            Text("Save")
+            Button(
+                onClick = { onNavigateBack() },
+                colors = ButtonDefaults.buttonColors(Color.White),
+                modifier = Modifier.padding(18.dp),
+            ) {
+              Text("Back")
+            }
+            Button(
+                onClick = {
+                  onSave(cropController.crop())
+                  onNavigateBack()
+                },
+                modifier = Modifier.padding(18.dp),
+            ) {
+              Text("Save")
+            }
           }
         }
       }
