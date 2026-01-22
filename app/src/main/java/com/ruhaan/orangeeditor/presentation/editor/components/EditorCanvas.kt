@@ -1,7 +1,9 @@
 package com.ruhaan.orangeeditor.presentation.editor.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -54,9 +58,11 @@ import com.ruhaan.orangeeditor.R
 import com.ruhaan.orangeeditor.domain.model.format.AlignmentConstants
 import com.ruhaan.orangeeditor.domain.model.format.CanvasFormat
 import com.ruhaan.orangeeditor.domain.model.layer.EditorState
+import com.ruhaan.orangeeditor.domain.model.layer.ImageLayer
 import com.ruhaan.orangeeditor.domain.model.layer.Layer
 import com.ruhaan.orangeeditor.domain.model.layer.LayerBounds
 import com.ruhaan.orangeeditor.domain.model.layer.TextLayer
+import com.ruhaan.orangeeditor.presentation.editor.EditorViewModel
 import com.ruhaan.orangeeditor.presentation.theme.CanvasOrange
 import com.ruhaan.orangeeditor.util.EditorRenderer
 import kotlin.math.abs
@@ -78,6 +84,7 @@ fun EditorCanvas(
             fontWeight: FontWeight,
             fontStyle: FontStyle,
         ) -> Unit,
+    viewModel: EditorViewModel,
 ) {
   // Local State
   val renderer = remember { EditorRenderer() }
@@ -93,6 +100,7 @@ fun EditorCanvas(
   val focusManager = LocalFocusManager.current
 
   val isKeyboardOpen = isKeyboardOpen()
+  val density = LocalDensity.current
 
   LaunchedEffect(editingLayer) {
     if (editingLayer == null) return@LaunchedEffect
@@ -138,6 +146,7 @@ fun EditorCanvas(
     editingLayer = null
     showColorSheet = false
     onLayerTapped(null)
+    viewModel.hideDeleteIcon()
   }
 
   // when keyboard is back then remove set editing layer to null so text filed disappear
@@ -270,7 +279,6 @@ fun EditorCanvas(
               }
             }
 
-            // Gesture
             GestureBox(
                 width = canvasWidth,
                 height = canvasHeight,
@@ -296,7 +304,61 @@ fun EditorCanvas(
                   isBold = textLayer.fontWeight == FontWeight.Bold
                   isItalic = textLayer.fontStyle == FontStyle.Italic
                 },
+                onImageLayerLongPress = { layerId -> viewModel.showDeleteIconFor(layerId) },
+                viewModel = viewModel,
             )
+
+            // Delete icon overlay (sticks to top-right of image layer)
+            viewModel.showDeleteIconForLayer.value?.let { layerId ->
+              val layer = state.layers.firstOrNull { it.id == layerId } ?: return@let
+              val transform = layer.transform
+
+              val bitmapSize =
+                  when (layer) {
+                    is ImageLayer -> {
+                      val bitmap = layer.bitmap ?: return@let
+                      IntSize(bitmap.width, bitmap.height)
+                    }
+                    is TextLayer -> {
+                      val bitmap = layer.bitmap ?: return@let
+                      IntSize(bitmap.width, bitmap.height)
+                    }
+                  }
+
+              val width = bitmapSize.width * transform.scale
+              val height = bitmapSize.height * transform.scale
+
+              if (width <= 0f || height <= 0f) return@let
+
+              // Position at top-right corner of the image
+              val iconX = transform.x + (width / 2f)
+              val iconY = transform.y - (height / 2f)
+
+              Box(
+                  modifier =
+                      Modifier.offset(
+                              x = with(density) { iconX.toDp() },
+                              y = with(density) { iconY.toDp() },
+                          )
+                          .size(25.dp)
+                          .background(Color(0xFFE53935), shape = CircleShape) // Red background
+                          .clickable(
+                              enabled = true,
+                              onClick = {
+                                viewModel.removeLayer(layerId)
+                                viewModel.hideDeleteIcon()
+                              },
+                          ),
+                  contentAlignment = Alignment.Center,
+              ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_cancel2),
+                    contentDescription = "Delete Layer",
+                    tint = Color.White,
+                    modifier = Modifier.size(25.dp),
+                )
+              }
+            }
           }
         }
       }
