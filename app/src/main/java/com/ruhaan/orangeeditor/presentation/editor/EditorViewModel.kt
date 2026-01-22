@@ -76,7 +76,7 @@ constructor(
     _editorState.update { it.copy(layers = it.layers + layer, selectedLayerId = layer.id) }
   }
 
-  fun selectedLayer(id: String) {
+  fun selectedLayer(id: String?) {
     _editorState.update { state -> state.copy(selectedLayerId = id) }
   }
 

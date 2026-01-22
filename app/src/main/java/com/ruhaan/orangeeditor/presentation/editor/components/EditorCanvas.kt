@@ -69,7 +69,7 @@ fun EditorCanvas(
     canvasFormat: CanvasFormat,
     state: EditorState,
     onCanvasSize: (IntSize) -> Unit,
-    onLayerTapped: (String) -> Unit,
+    onLayerTapped: (String?) -> Unit,
     onUpdateLayer: (Layer) -> Unit,
     onUpdateSelectedTextLayer:
         (
@@ -137,6 +137,7 @@ fun EditorCanvas(
   fun reset() {
     editingLayer = null
     showColorSheet = false
+    onLayerTapped(null)
   }
 
   // when keyboard is back then remove set editing layer to null so text filed disappear
@@ -277,7 +278,7 @@ fun EditorCanvas(
                 canvasHeightPx = with(LocalDensity.current) { canvasHeight.toPx() },
                 state = state,
                 onTapped = { reset() },
-                onLayerTapped = { id -> onLayerTapped(id) },
+                onLayerTapped = onLayerTapped,
                 onUpdateLayer = onUpdateLayer,
                 onDragStateChange = { dragging -> isDragging = dragging },
                 onLayerBoundsChange = { layerBounds = it },
@@ -322,7 +323,7 @@ fun EditorCanvas(
         ) {
           TextField(
               value = editingText,
-              onValueChange = { if(it.text.isNotBlank()) editingText = it },
+              onValueChange = { if (it.text.isNotBlank()) editingText = it },
               modifier =
                   Modifier.weight(1f)
                       .height(56.dp) // ✅ fixed height
