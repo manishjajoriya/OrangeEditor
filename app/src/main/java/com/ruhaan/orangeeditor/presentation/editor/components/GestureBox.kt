@@ -36,6 +36,7 @@ fun GestureBox(
     onLayerTapped: (String?) -> Unit,
     onDragStateChange: (Boolean) -> Unit,
     onLayerBoundsChange: (LayerBounds?) -> Unit,
+    onImageLayerDoubleTap: (String) -> Unit,
 ) {
   val currentState by rememberUpdatedState(state)
   var activeLayerId by remember { mutableStateOf<String?>(null) }
@@ -95,7 +96,10 @@ fun GestureBox(
                           onLayerTapped(tappedLayer.id)
                         }
 
-                        is ImageLayer -> onLayerTapped(tappedLayer.id)
+                        is ImageLayer -> {
+                          onLayerTapped(tappedLayer.id)
+                          onImageLayerDoubleTap(tappedLayer.id)
+                        }
 
                         null -> onDoubleTap()
                       }
