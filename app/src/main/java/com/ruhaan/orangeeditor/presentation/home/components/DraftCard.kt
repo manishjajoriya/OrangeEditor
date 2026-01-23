@@ -30,7 +30,7 @@ import coil3.compose.AsyncImage
 import com.ruhaan.orangeeditor.R
 import com.ruhaan.orangeeditor.data.entity.EditorStateEntity
 import com.ruhaan.orangeeditor.presentation.theme.Typography
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -80,20 +80,20 @@ fun DraftCard(
     )
 
     Text(
-        text = "Updated ${formatCreatedAt(draft.createAt)}",
+        text = "Updated ${formatCreatedAt(draft.timestamp)}",
         modifier = Modifier.fillMaxWidth(),
         style = Typography.titleSmall.copy(fontWeight = FontWeight.Normal),
     )
   }
 }
 
-private fun formatCreatedAt(createdAt: LocalDateTime): String {
-  val now = LocalDateTime.now()
+private fun formatCreatedAt(timestamp: OffsetDateTime): String {
+  val now = OffsetDateTime.now()
 
-  val seconds = ChronoUnit.SECONDS.between(createdAt, now)
-  val minutes = ChronoUnit.MINUTES.between(createdAt, now)
-  val hours = ChronoUnit.HOURS.between(createdAt, now)
-  val days = ChronoUnit.DAYS.between(createdAt, now)
+  val seconds = ChronoUnit.SECONDS.between(timestamp, now)
+  val minutes = ChronoUnit.MINUTES.between(timestamp, now)
+  val hours = ChronoUnit.HOURS.between(timestamp, now)
+  val days = ChronoUnit.DAYS.between(timestamp, now)
 
   return when {
     seconds < 60 -> "Just now"
@@ -103,9 +103,9 @@ private fun formatCreatedAt(createdAt: LocalDateTime): String {
     days < 7 -> "$days days ago"
     else -> {
       val formatter =
-          if (createdAt.year == now.year) DateTimeFormatter.ofPattern("dd MMM")
+          if (timestamp.year == now.year) DateTimeFormatter.ofPattern("dd MMM")
           else DateTimeFormatter.ofPattern("dd MMM yyyy")
-      createdAt.format(formatter)
+      timestamp.format(formatter)
     }
   }
 }

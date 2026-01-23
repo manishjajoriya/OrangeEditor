@@ -3,7 +3,7 @@ package com.ruhaan.orangeeditor.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ruhaan.orangeeditor.domain.model.format.CanvasFormat
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 @Entity(tableName = "editor_states")
 data class EditorStateEntity(
@@ -14,5 +14,5 @@ data class EditorStateEntity(
     val canvasWidth: Int,
     val canvasHeight: Int,
     val previewUrl: String?,
-    val createAt: LocalDateTime,
+    val timestamp: OffsetDateTime,
 )

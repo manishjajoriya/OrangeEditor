@@ -2,17 +2,18 @@ package com.ruhaan.orangeeditor.data.converter
 
 import androidx.room.TypeConverter
 import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 class Converters {
+
   @TypeConverter
-  fun fromLocalDatetime(value: LocalDateTime): Long {
-    return value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+  fun fromOffsetDateTime(value: OffsetDateTime): Long {
+    return value.toEpochSecond()
   }
 
   @TypeConverter
-  fun toLocalDateTime(value: Long): LocalDateTime {
-    return Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()).toLocalDateTime()
+  fun toOffsetDateTime(value: Long): OffsetDateTime {
+    return OffsetDateTime.ofInstant(Instant.ofEpochSecond(value), ZoneOffset.UTC)
   }
 }
