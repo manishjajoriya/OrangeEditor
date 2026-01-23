@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -49,6 +50,7 @@ fun HomeScreen(
     navController: NavHostController,
 ) {
   val allDraft by viewmodel.allDraft.collectAsState()
+  val sortedAllDraft by rememberUpdatedState(allDraft.sortedByDescending { it.timestamp })
 
   LazyVerticalGrid(
       columns = GridCells.Adaptive(160.dp),
@@ -117,7 +119,7 @@ fun HomeScreen(
     }
 
     if (allDraft.isNotEmpty()) {
-      itemsIndexed(allDraft) { _, draft ->
+      itemsIndexed(sortedAllDraft) { _, draft ->
         DraftCard(
             modifier =
                 Modifier.shadow(elevation = 6.dp, shape = RoundedCornerShape(12.dp), clip = false)
