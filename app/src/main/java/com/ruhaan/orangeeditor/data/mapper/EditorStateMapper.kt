@@ -4,7 +4,7 @@ import androidx.compose.ui.unit.IntSize
 import com.ruhaan.orangeeditor.data.entity.EditorStateEntity
 import com.ruhaan.orangeeditor.domain.model.layer.EditorState
 import com.ruhaan.orangeeditor.domain.model.layer.Layer
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 fun EditorStateEntity.toDomain(layers: List<Layer>): EditorState {
   return EditorState(
@@ -14,7 +14,7 @@ fun EditorStateEntity.toDomain(layers: List<Layer>): EditorState {
       selectedLayerId = selectedLayerId,
       fileName = fileName,
       canvasSize = IntSize(canvasWidth, canvasHeight),
-      createdAt = createAt,
+      timestamp = timestamp,
   )
 }
 
@@ -27,6 +27,6 @@ fun EditorState.toEntity(previewUrl: String?): EditorStateEntity {
       previewUrl = previewUrl,
       canvasWidth = canvasSize.width,
       canvasHeight = canvasSize.height,
-      createAt = LocalDateTime.now(),
+      timestamp = OffsetDateTime.now(),
   )
 }
