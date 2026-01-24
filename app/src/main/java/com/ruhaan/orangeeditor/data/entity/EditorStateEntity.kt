@@ -1,7 +1,9 @@
 package com.ruhaan.orangeeditor.data.entity
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasCustomizer
 import com.ruhaan.orangeeditor.domain.model.format.CanvasFormat
 import java.time.OffsetDateTime
 
@@ -11,6 +13,7 @@ data class EditorStateEntity(
     val canvasFormat: CanvasFormat,
     val selectedLayerId: String? = null,
     val fileName: String = "Draft",
+    @Embedded val customizer: CanvasCustomizer,
     val canvasWidth: Int,
     val canvasHeight: Int,
     val previewUrl: String?,

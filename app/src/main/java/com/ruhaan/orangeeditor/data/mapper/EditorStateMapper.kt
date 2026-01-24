@@ -12,7 +12,7 @@ fun EditorStateEntity.toDomain(layers: List<Layer>): EditorState {
       layers = layers,
       canvasFormat = canvasFormat,
       selectedLayerId = selectedLayerId,
-      fileName = fileName,
+      customizer = customizer,
       canvasSize = IntSize(canvasWidth, canvasHeight),
       timestamp = timestamp,
   )
@@ -23,7 +23,7 @@ fun EditorState.toEntity(previewUrl: String?): EditorStateEntity {
       editorId = editorId,
       canvasFormat = canvasFormat,
       selectedLayerId = selectedLayerId,
-      fileName = fileName,
+      customizer = customizer,
       previewUrl = previewUrl,
       canvasWidth = canvasSize.width,
       canvasHeight = canvasSize.height,
