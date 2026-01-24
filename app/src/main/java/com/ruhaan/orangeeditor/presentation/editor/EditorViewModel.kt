@@ -378,6 +378,7 @@ constructor(
       val bitmapFromLayer =
           storage.getBitmapFromLayer(
               layers = _editorState.value.layers,
+              customizer = _editorState.value.customizer,
               canvasFormat = canvasFormat,
               canvasScreenSize = canvasScreenSize,
           )

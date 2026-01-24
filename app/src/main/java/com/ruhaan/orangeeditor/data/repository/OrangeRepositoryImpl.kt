@@ -77,6 +77,7 @@ class OrangeRepositoryImpl(
         val previewBitmap =
             storage.getBitmapFromLayer(
                 layers = editorState.layers,
+                customizer = editorState.customizer,
                 canvasFormat = editorState.canvasFormat,
                 canvasScreenSize = editorState.canvasSize,
             )
@@ -84,7 +85,7 @@ class OrangeRepositoryImpl(
             storage.saveBitmapToAppStorage(
                 bitmap = previewBitmap,
                 storageType = StorageType.PREVIEW_DIR,
-                quality = 10,
+                quality = 50,
             )
 
         val editorStateEntity = editorState.toEntity(previewUrl = previewUrl)
