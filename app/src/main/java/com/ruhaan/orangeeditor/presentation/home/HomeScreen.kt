@@ -112,7 +112,7 @@ fun HomeScreen(
               CanvasFormatCard(
                   canvasFormat = format,
                   onClick = {
-                    viewmodel.newEditorState(canvasFormat = format)
+                    viewmodel.newEditorStateWithCanvasFormat(canvasFormat = format)
                     navController.navigate(Route.Editor.route)
                   },
               )

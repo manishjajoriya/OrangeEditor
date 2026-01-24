@@ -80,6 +80,7 @@ fun NavGraph(
         route = Route.Customize.route,
     ) {
       CustomizeScreen(
+          viewmodel = viewmodel,
           onNavigateBack = {
             val route =
                 navController.currentBackStackEntry?.destination?.route ?: return@CustomizeScreen
@@ -87,6 +88,7 @@ fun NavGraph(
               navController.popBackStack()
             } else return@CustomizeScreen
           },
+          onGetStated = { navController.navigate(Route.Editor.route) },
       )
     }
   }

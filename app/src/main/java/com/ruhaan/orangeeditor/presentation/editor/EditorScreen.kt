@@ -178,7 +178,11 @@ fun EditorScreen(
               onBackClick = {
                 viewModel.saveDraft()
                 viewModel.resetState()
-                navController.popBackStack()
+                val route = navController.currentBackStackEntry?.destination?.route
+                if (route == Route.Editor.route) {
+                  navController.popBackStack()
+                  navController.navigate(Route.Home.route)
+                }
               },
               onFileNameClick = { showFileNameSheet = true },
               onUndoClick = { viewModel.undo() },

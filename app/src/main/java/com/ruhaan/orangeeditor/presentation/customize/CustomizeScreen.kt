@@ -45,13 +45,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruhaan.orangeeditor.R
-import com.ruhaan.orangeeditor.domain.model.canvas.CanvasBackground
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasBackgroundType
 import com.ruhaan.orangeeditor.domain.model.canvas.CanvasColor
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasCustomizer
 import com.ruhaan.orangeeditor.domain.model.canvas.Gradient
 import com.ruhaan.orangeeditor.domain.model.format.CanvasFormat
+import com.ruhaan.orangeeditor.domain.model.layer.EditorState
 import com.ruhaan.orangeeditor.presentation.components.LargeIconButton
 import com.ruhaan.orangeeditor.presentation.customize.components.ColorPatchGridCustom
 import com.ruhaan.orangeeditor.presentation.customize.components.meshGradient
+import com.ruhaan.orangeeditor.presentation.editor.EditorViewModel
 import com.ruhaan.orangeeditor.presentation.theme.CanvasOrange
 import com.ruhaan.orangeeditor.presentation.theme.TextPrimary
 import com.ruhaan.orangeeditor.presentation.theme.TextSecondary
@@ -60,13 +63,15 @@ import com.ruhaan.orangeeditor.presentation.theme.Typography
 @Composable
 fun CustomizeScreen(
     modifier: Modifier = Modifier,
+    viewmodel: EditorViewModel,
     onNavigateBack: () -> Unit,
+    onGetStated: () -> Unit,
 ) {
   // local states
   val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
   var fileName by remember { mutableStateOf("Untitled") }
   var showFormatDropDownMenu by remember { mutableStateOf(false) }
-  var selectedCanvasBackground by remember { mutableStateOf(CanvasBackground.COLOR) }
+  var selectedCanvasBackgroundType by remember { mutableStateOf(CanvasBackgroundType.COLOR) }
   var selectedFormated by remember { mutableStateOf(CanvasFormat.POST) }
   var selectedCanvasColor by remember { mutableStateOf(CanvasColor.WHITE) }
   var selectedGradient by remember { mutableStateOf(Gradient.OCEAN_BREEZE) }
@@ -78,7 +83,11 @@ fun CustomizeScreen(
   ) { _ ->
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 100.dp),
-        modifier = modifier.fillMaxSize().padding(vertical = 8.dp, horizontal = 12.dp).safeDrawingPadding(),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(vertical = 8.dp, horizontal = 12.dp)
+                .safeDrawingPadding(),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -93,7 +102,27 @@ fun CustomizeScreen(
               contentDescription = "go back",
               onClick = onNavigateBack,
           )
-          Button(onClick = {}) { Text("Save") }
+          Button(
+              onClick = {
+                viewmodel.newEditState(
+                    editorState =
+                        EditorState()
+                            .copy(
+                                canvasFormat = selectedFormated,
+                                fileName = fileName,
+                                customizer =
+                                    CanvasCustomizer(
+                                        canvasBackgroundType = selectedCanvasBackgroundType,
+                                        canvasColor = selectedCanvasColor,
+                                        canvasGradient = selectedGradient,
+                                    ),
+                            )
+                )
+                onGetStated()
+              }
+          ) {
+            Text("Get stated")
+          }
         }
       }
       item(span = { GridItemSpan(maxLineSpan) }) {
@@ -150,21 +179,22 @@ fun CustomizeScreen(
           Row(
               verticalAlignment = Alignment.CenterVertically,
           ) {
-            CanvasBackground.entries.forEach { option ->
+            CanvasBackgroundType.entries.forEach { option ->
               Row(
                   modifier =
-                      Modifier.clickable(onClick = { selectedCanvasBackground = option })
+                      Modifier.clickable(onClick = { selectedCanvasBackgroundType = option })
                           .border(
                               2.dp,
-                              if (selectedCanvasBackground == option) CanvasOrange else Color.Gray,
+                              if (selectedCanvasBackgroundType == option) CanvasOrange
+                              else Color.Gray,
                               shape = RoundedCornerShape(20.dp),
                           )
                           .padding(start = 4.dp, end = 12.dp),
                   verticalAlignment = Alignment.CenterVertically,
               ) {
                 RadioButton(
-                    selected = (selectedCanvasBackground == option),
-                    onClick = { selectedCanvasBackground = option },
+                    selected = (selectedCanvasBackgroundType == option),
+                    onClick = { selectedCanvasBackgroundType = option },
                 )
                 Text(
                     text = option.title,
@@ -177,7 +207,7 @@ fun CustomizeScreen(
         }
       }
 
-      if (selectedCanvasBackground == CanvasBackground.COLOR) {
+      if (selectedCanvasBackgroundType == CanvasBackgroundType.COLOR) {
         item(span = { GridItemSpan(maxLineSpan) }) {
           ColorPatchGridCustom(
               colors = CanvasColor.entries,
