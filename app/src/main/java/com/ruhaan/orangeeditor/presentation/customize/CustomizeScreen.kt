@@ -3,6 +3,7 @@ package com.ruhaan.orangeeditor.presentation.customize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBars
@@ -32,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,18 +81,36 @@ fun CustomizeScreen(
   var selectedCanvasColor by remember { mutableStateOf(CanvasColor.WHITE) }
   var selectedGradient by remember { mutableStateOf(Gradient.OCEAN_BREEZE) }
 
+  val focusManager = LocalFocusManager.current
+  val isKeyboardOpen = isKeyBordOpen()
+
+  LaunchedEffect(isKeyboardOpen) {
+    if (!isKeyboardOpen) {
+      focusManager.clearFocus()
+    }
+  }
+
   Scaffold(
       topBar = {
-        Row(modifier = Modifier.background(CanvasOrange).fillMaxWidth().height(statusBarHeight)) {}
-      }
+        Row(modifier = Modifier
+          .background(CanvasOrange)
+          .fillMaxWidth()
+          .height(statusBarHeight)) {}
+      },
   ) { _ ->
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 100.dp),
         modifier =
             modifier
-                .fillMaxSize()
-                .padding(vertical = 8.dp, horizontal = 12.dp)
-                .safeDrawingPadding(),
+              .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+              ) {
+                focusManager.clearFocus()
+              }
+              .fillMaxSize()
+              .padding(vertical = 8.dp, horizontal = 12.dp)
+              .safeDrawingPadding(),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -104,6 +127,7 @@ fun CustomizeScreen(
           )
           Button(
               onClick = {
+                focusManager.clearFocus()
                 viewmodel.newEditState(
                     editorState =
                         EditorState()
@@ -152,7 +176,12 @@ fun CustomizeScreen(
           Text(text = "Canvas format", style = Typography.titleLarge.copy(fontSize = 18.sp))
           Spacer(modifier = Modifier.width(8.dp))
           Column {
-            OutlinedButton(onClick = { showFormatDropDownMenu = !showFormatDropDownMenu }) {
+            OutlinedButton(
+                onClick = {
+                  showFormatDropDownMenu = !showFormatDropDownMenu
+                  focusManager.clearFocus()
+                }
+            ) {
               Text(selectedFormated.title)
             }
             DropdownMenu(
@@ -166,6 +195,7 @@ fun CustomizeScreen(
                     onClick = {
                       selectedFormated = format
                       showFormatDropDownMenu = false
+                      focusManager.clearFocus()
                     },
                 )
               }
@@ -182,19 +212,28 @@ fun CustomizeScreen(
             CanvasBackgroundType.entries.forEach { option ->
               Row(
                   modifier =
-                      Modifier.clickable(onClick = { selectedCanvasBackgroundType = option })
-                          .border(
-                              2.dp,
-                              if (selectedCanvasBackgroundType == option) CanvasOrange
-                              else Color.Gray,
-                              shape = RoundedCornerShape(20.dp),
-                          )
-                          .padding(start = 4.dp, end = 12.dp),
+                      Modifier
+                        .clickable(
+                          onClick = {
+                            selectedCanvasBackgroundType = option
+                            focusManager.clearFocus()
+                          }
+                        )
+                        .border(
+                          2.dp,
+                          if (selectedCanvasBackgroundType == option) CanvasOrange
+                          else Color.Gray,
+                          shape = RoundedCornerShape(20.dp),
+                        )
+                        .padding(start = 4.dp, end = 12.dp),
                   verticalAlignment = Alignment.CenterVertically,
               ) {
                 RadioButton(
                     selected = (selectedCanvasBackgroundType == option),
-                    onClick = { selectedCanvasBackgroundType = option },
+                    onClick = {
+                      selectedCanvasBackgroundType = option
+                      focusManager.clearFocus()
+                    },
                 )
                 Text(
                     text = option.title,
@@ -212,7 +251,10 @@ fun CustomizeScreen(
           ColorPatchGridCustom(
               colors = CanvasColor.entries,
               selectedColor = selectedCanvasColor,
-              onColorSelected = { selectedCanvasColor = it },
+              onColorSelected = {
+                selectedCanvasColor = it
+                focusManager.clearFocus()
+              },
           )
         }
       } else {
@@ -220,9 +262,15 @@ fun CustomizeScreen(
           item {
             Box(
                 modifier =
-                    Modifier.aspectRatio(9 / 16f)
-                        .meshGradient(gradient.points)
-                        .clickable(onClick = { selectedGradient = gradient }),
+                    Modifier
+                      .aspectRatio(9 / 16f)
+                      .meshGradient(gradient.points)
+                      .clickable(
+                        onClick = {
+                          selectedGradient = gradient
+                          focusManager.clearFocus()
+                        }
+                      ),
                 contentAlignment = Alignment.Center,
             ) {
               if (selectedGradient == gradient) {
@@ -240,4 +288,10 @@ fun CustomizeScreen(
       }
     }
   }
+}
+
+@Composable
+fun isKeyBordOpen(): Boolean {
+  val imeInsets = WindowInsets.ime
+  return imeInsets.getBottom(LocalDensity.current) > 0
 }
