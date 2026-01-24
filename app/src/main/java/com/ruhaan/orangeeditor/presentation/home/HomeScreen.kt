@@ -1,6 +1,7 @@
 package com.ruhaan.orangeeditor.presentation.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -46,6 +49,7 @@ import com.ruhaan.orangeeditor.presentation.home.components.DraftCard
 import com.ruhaan.orangeeditor.presentation.navigation.Route
 import com.ruhaan.orangeeditor.presentation.theme.BackgroundLight
 import com.ruhaan.orangeeditor.presentation.theme.CanvasOrange
+import com.ruhaan.orangeeditor.presentation.theme.CardBackground
 import com.ruhaan.orangeeditor.presentation.theme.TextPrimary
 import com.ruhaan.orangeeditor.presentation.theme.TextSecondary
 
@@ -69,8 +73,8 @@ fun HomeScreen(
             modifier
                 .fillMaxSize()
                 .background(BackgroundLight)
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(bottom = 8.dp, start = 20.dp, end = 20.dp),
+                .padding(bottom = 8.dp, start = 20.dp, end = 20.dp)
+                .windowInsetsPadding(WindowInsets.safeDrawing),
         horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -112,6 +116,30 @@ fun HomeScreen(
                     navController.navigate(Route.Editor.route)
                   },
               )
+            }
+            // Custom canvas
+            item {
+              Card(
+                  modifier =
+                      modifier.size(180.dp).clickable {
+                        navController.navigate(Route.Customize.route)
+                      },
+                  colors = CardDefaults.cardColors(containerColor = CardBackground),
+                  elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+              ) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                  Text(
+                      text = "Custom",
+                      fontSize = 18.sp,
+                      fontWeight = FontWeight.SemiBold,
+                      color = TextPrimary,
+                  )
+                }
+              }
             }
           }
         }
