@@ -108,6 +108,30 @@ fun HomeScreen(
           LazyRow(
               horizontalArrangement = Arrangement.spacedBy(12.dp),
           ) {
+            // Custom canvas
+            item {
+              Card(
+                modifier =
+                  modifier.size(180.dp).clickable {
+                    navController.navigate(Route.Customize.route)
+                  },
+                colors = CardDefaults.cardColors(containerColor = CardBackground),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+              ) {
+                Column(
+                  modifier = Modifier.fillMaxSize().padding(8.dp),
+                  horizontalAlignment = Alignment.CenterHorizontally,
+                  verticalArrangement = Arrangement.Center,
+                ) {
+                  Text(
+                    text = "Custom",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary,
+                  )
+                }
+              }
+            }
             items(CanvasFormat.entries) { format ->
               CanvasFormatCard(
                   canvasFormat = format,
@@ -116,30 +140,6 @@ fun HomeScreen(
                     navController.navigate(Route.Editor.route)
                   },
               )
-            }
-            // Custom canvas
-            item {
-              Card(
-                  modifier =
-                      modifier.size(180.dp).clickable {
-                        navController.navigate(Route.Customize.route)
-                      },
-                  colors = CardDefaults.cardColors(containerColor = CardBackground),
-                  elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-              ) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                  Text(
-                      text = "Custom",
-                      fontSize = 18.sp,
-                      fontWeight = FontWeight.SemiBold,
-                      color = TextPrimary,
-                  )
-                }
-              }
             }
           }
         }
