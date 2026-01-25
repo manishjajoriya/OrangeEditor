@@ -7,38 +7,42 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.VertexMode
+import androidx.compose.ui.graphics.Vertices
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.withSave
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasBackgroundType
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasCustomizer
+import com.ruhaan.orangeeditor.domain.model.canvas.Gradient
 import com.ruhaan.orangeeditor.domain.model.layer.ImageFilter
 import com.ruhaan.orangeeditor.domain.model.layer.ImageLayer
 import com.ruhaan.orangeeditor.domain.model.layer.Layer
 import com.ruhaan.orangeeditor.domain.model.layer.NeutralAdjustment
 import com.ruhaan.orangeeditor.domain.model.layer.TextLayer
 import com.ruhaan.orangeeditor.domain.model.layer.toColorMatrix
+import com.ruhaan.orangeeditor.presentation.customize.components.PointData
 
 class EditorRenderer {
 
   fun draw(
       canvas: Canvas,
       layers: List<Layer>,
+      customizer: CanvasCustomizer,
       scaleX: Float = 1f,
       scaleY: Float = 1f,
       selectedLayerId: String? = null,
   ) {
+    val modifiedCanvas = applyCanvasCustomization(canvas, customizer = customizer)
     layers
         .sortedBy { it.zIndex }
         .filter { it.visible }
-        .forEach { layer ->
-          when (layer) {
-            is TextLayer -> drawBitmap(canvas, layer, scaleX, scaleY, selectedLayerId)
-            is ImageLayer -> drawBitmap(canvas, layer, scaleX, scaleY, selectedLayerId)
-          }
-        }
+        .forEach { layer -> drawBitmap(modifiedCanvas, layer, scaleX, scaleY, selectedLayerId) }
   }
 
   fun drawBitmap(
@@ -138,29 +142,6 @@ class EditorRenderer {
     return canvas
   }
 
-  fun Int.applyLightness(factor: Float): Int {
-    val hsv = FloatArray(3)
-    android.graphics.Color.colorToHSV(this, hsv)
-    hsv[2] = (hsv[2] * factor).coerceIn(0f, 1f)
-    return android.graphics.Color.HSVToColor(hsv)
-  }
-
-  private fun resolveTypeface(
-      fontWeight: FontWeight,
-      fontStyle: FontStyle,
-  ): Typeface {
-
-    val style =
-        when {
-          fontWeight >= FontWeight.Bold && fontStyle == FontStyle.Italic -> Typeface.BOLD_ITALIC
-          fontWeight >= FontWeight.Bold -> Typeface.BOLD
-          fontStyle == FontStyle.Italic -> Typeface.ITALIC
-          else -> Typeface.NORMAL
-        }
-
-    return Typeface.create(Typeface.DEFAULT, style)
-  }
-
   fun textLayerToBitmap(
       text: String,
       color: Color,
@@ -189,5 +170,77 @@ class EditorRenderer {
     canvas.drawText(text, -bounds.left.toFloat(), -bounds.top.toFloat(), paint)
 
     return bitmap
+  }
+
+  fun Int.applyLightness(factor: Float): Int {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(this, hsv)
+    hsv[2] = (hsv[2] * factor).coerceIn(0f, 1f)
+    return android.graphics.Color.HSVToColor(hsv)
+  }
+
+  private fun resolveTypeface(
+      fontWeight: FontWeight,
+      fontStyle: FontStyle,
+  ): Typeface {
+
+    val style =
+        when {
+          fontWeight >= FontWeight.Bold && fontStyle == FontStyle.Italic -> Typeface.BOLD_ITALIC
+          fontWeight >= FontWeight.Bold -> Typeface.BOLD
+          fontStyle == FontStyle.Italic -> Typeface.ITALIC
+          else -> Typeface.NORMAL
+        }
+
+    return Typeface.create(Typeface.DEFAULT, style)
+  }
+
+  private fun applyCanvasCustomization(
+      canvas: Canvas,
+      customizer: CanvasCustomizer,
+  ): Canvas {
+    when (customizer.canvasBackgroundType) {
+      CanvasBackgroundType.COLOR -> {
+        val paint =
+            Paint().apply {
+              color = customizer.canvasColor.color.toArgb()
+              style = Paint.Style.FILL
+            }
+        canvas.drawRect(0f, 0f, canvas.width.toFloat(), canvas.height.toFloat(), paint)
+      }
+
+      CanvasBackgroundType.GRADIENT -> {
+        drawMeshGradient(canvas, customizer.canvasGradient)
+      }
+    }
+
+    return canvas
+  }
+
+  private fun drawMeshGradient(androidCanvas: Canvas, gradient: Gradient) {
+    val composeCanvas = androidx.compose.ui.graphics.Canvas(androidCanvas)
+
+    val width = androidCanvas.width.toFloat()
+    val height = androidCanvas.height.toFloat()
+
+    val pointData = PointData(points = gradient.points, stepsX = 1, stepsY = 1)
+
+    composeCanvas.save()
+    composeCanvas.scale(width, height)
+
+    composeCanvas.drawVertices(
+        vertices =
+            Vertices(
+                vertexMode = VertexMode.Triangles,
+                positions = pointData.offsets,
+                textureCoordinates = pointData.offsets,
+                colors = pointData.colors,
+                indices = pointData.indices,
+            ),
+        blendMode = BlendMode.Dst,
+        paint = androidx.compose.ui.graphics.Paint(),
+    )
+
+    composeCanvas.restore()
   }
 }

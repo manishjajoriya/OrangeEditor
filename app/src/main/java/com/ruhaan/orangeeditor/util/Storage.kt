@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 import com.ruhaan.orangeeditor.data.storage.StorageType
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasCustomizer
 import com.ruhaan.orangeeditor.domain.model.format.CanvasFormat
 import com.ruhaan.orangeeditor.domain.model.layer.Layer
 import java.io.File
@@ -21,41 +22,34 @@ import kotlinx.coroutines.withContext
 
 class Storage(private val context: Context, private val editorRenderer: EditorRenderer) {
   suspend fun saveBitmapToAppStorage(
-    bitmap: Bitmap,
-    storageType: StorageType,
-    fileName: String? = null,
-    quality: Int = 80,
+      bitmap: Bitmap,
+      storageType: StorageType,
+      fileName: String? = null,
+      quality: Int = 100,
   ): String? =
-    withContext(Dispatchers.IO) {
-      try {
-        val (format, extension) =
-          if (storageType == StorageType.TEXT_DIR) {
-            Bitmap.CompressFormat.PNG to ".png"
-          } else {
-            Bitmap.CompressFormat.JPEG to ".jpg"
-          }
+      withContext(Dispatchers.IO) {
+        try {
+          val (format, extension) =
+              if (storageType == StorageType.TEXT_DIR) {
+                Bitmap.CompressFormat.PNG to ".png"
+              } else {
+                Bitmap.CompressFormat.JPEG to ".jpg"
+              }
 
-        val finalFileName =
-          fileName ?: "img_${System.currentTimeMillis()}$extension"
+          val finalFileName = fileName ?: "img_${System.currentTimeMillis()}$extension"
 
-        val dir =
-          File(context.filesDir, storageType.folderName).apply {
-            if (!exists()) mkdirs()
-          }
+          val dir = File(context.filesDir, storageType.folderName).apply { if (!exists()) mkdirs() }
 
-        val file = File(dir, finalFileName)
+          val file = File(dir, finalFileName)
 
-        FileOutputStream(file).use { out ->
-          bitmap.compress(format, quality, out)
+          FileOutputStream(file).use { out -> bitmap.compress(format, quality, out) }
+
+          file.absolutePath
+        } catch (e: Exception) {
+          e.printStackTrace()
+          null
         }
-
-        file.absolutePath
-      } catch (e: Exception) {
-        e.printStackTrace()
-        null
       }
-    }
-
 
   suspend fun loadBitmapFromPath(path: String): Bitmap? =
       withContext(Dispatchers.IO) { BitmapFactory.decodeFile(path) }
@@ -71,6 +65,7 @@ class Storage(private val context: Context, private val editorRenderer: EditorRe
 
   fun getBitmapFromLayer(
       layers: List<Layer>,
+      customizer: CanvasCustomizer,
       canvasFormat: CanvasFormat,
       canvasScreenSize: IntSize,
   ): Bitmap {
@@ -79,6 +74,7 @@ class Storage(private val context: Context, private val editorRenderer: EditorRe
     canvas.drawColor(android.graphics.Color.WHITE)
 
     if (layers.isEmpty()) {
+      editorRenderer.draw(canvas = canvas, layers = layers, customizer = customizer)
       return exportBitmap
     }
 
@@ -86,8 +82,13 @@ class Storage(private val context: Context, private val editorRenderer: EditorRe
       val scaleX = canvasFormat.width.toFloat() / canvasScreenSize.width
       val scaleY = canvasFormat.height.toFloat() / canvasScreenSize.height
 
-      canvas.save()
-      editorRenderer.draw(canvas, layers, scaleX, scaleY)
+      editorRenderer.draw(
+          canvas = canvas,
+          layers = layers,
+          customizer = customizer,
+          scaleX = scaleX,
+          scaleY = scaleY,
+      )
 
       return exportBitmap
     } catch (e: Exception) {

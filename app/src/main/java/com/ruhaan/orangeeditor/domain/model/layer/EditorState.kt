@@ -1,6 +1,7 @@
 package com.ruhaan.orangeeditor.domain.model.layer
 
 import androidx.compose.ui.unit.IntSize
+import com.ruhaan.orangeeditor.domain.model.canvas.CanvasCustomizer
 import com.ruhaan.orangeeditor.domain.model.format.CanvasFormat
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -11,6 +12,7 @@ data class EditorState(
     val layers: List<Layer> = emptyList(),
     val selectedLayerId: String? = null,
     val fileName: String = "Untitled",
+    val customizer: CanvasCustomizer = CanvasCustomizer(),
     val canvasSize: IntSize = IntSize.Zero,
     val timestamp: OffsetDateTime = OffsetDateTime.now(),
 )

@@ -14,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.ruhaan.orangeeditor.presentation.crop.CropScreen
+import com.ruhaan.orangeeditor.presentation.customize.CustomizeScreen
 import com.ruhaan.orangeeditor.presentation.editor.EditorScreen
 import com.ruhaan.orangeeditor.presentation.editor.EditorViewModel
 import com.ruhaan.orangeeditor.presentation.home.HomeScreen
@@ -47,7 +48,8 @@ fun NavGraph(
 
       BackHandler(enabled = true) {
         if (backPressedOnce) {
-          navController.popBackStack()
+          navController.clearBackStack<String>()
+          navController.navigate(Route.Home.route)
           viewmodel.saveDraft()
           viewmodel.resetState()
         } else {
@@ -72,6 +74,22 @@ fun NavGraph(
           selectedLayer = viewmodel.getSelectedLayer(),
           onSave = viewmodel::updateBitmapOfSelectedImageLayer,
           onNavigateBack = navController::popBackStack,
+      )
+    }
+
+    composable(
+        route = Route.Customize.route,
+    ) {
+      CustomizeScreen(
+          viewmodel = viewmodel,
+          onNavigateBack = {
+            val route =
+                navController.currentBackStackEntry?.destination?.route ?: return@CustomizeScreen
+            if (route == Route.Customize.route) {
+              navController.popBackStack()
+            } else return@CustomizeScreen
+          },
+          onGetStated = { navController.navigate(Route.Editor.route) },
       )
     }
   }

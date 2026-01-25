@@ -378,6 +378,7 @@ constructor(
       val bitmapFromLayer =
           storage.getBitmapFromLayer(
               layers = _editorState.value.layers,
+              customizer = _editorState.value.customizer,
               canvasFormat = canvasFormat,
               canvasScreenSize = canvasScreenSize,
           )
@@ -426,7 +427,11 @@ constructor(
     viewModelScope.launch { orangeRepository.deleteEditorStateById(editorId = editorId) }
   }
 
-  fun newEditorState(canvasFormat: CanvasFormat) {
+  fun newEditorStateWithCanvasFormat(canvasFormat: CanvasFormat) {
     _editorState.value = EditorState(canvasFormat = canvasFormat)
+  }
+
+  fun newEditState(editorState: EditorState) {
+    _editorState.value = editorState
   }
 }

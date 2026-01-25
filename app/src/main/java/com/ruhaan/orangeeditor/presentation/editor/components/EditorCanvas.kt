@@ -189,8 +189,9 @@ fun EditorCanvas(
             Canvas(modifier = Modifier.size(canvasWidth, canvasHeight)) {
               drawIntoCanvas {
                 renderer.draw(
-                    it.nativeCanvas,
-                    state.layers,
+                    canvas = it.nativeCanvas,
+                    customizer = state.customizer,
+                    layers = state.layers,
                     selectedLayerId = state.selectedLayerId,
                 )
               }
