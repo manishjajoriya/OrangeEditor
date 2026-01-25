@@ -85,6 +85,8 @@ fun EditorCanvas(
             fontStyle: FontStyle,
         ) -> Unit,
     viewModel: EditorViewModel,
+    textModeEnabled: Boolean,
+    onTextModeExit: () -> Unit,
 ) {
   // Local State
   val renderer = remember { EditorRenderer() }
@@ -176,194 +178,214 @@ fun EditorCanvas(
             width to height
           }
 
-      Box(
-          modifier =
-              Modifier.border(width = 2.dp, color = Color.Gray.copy(alpha = 0.4f))
-                  .size(width = canvasWidth, height = canvasHeight)
-                  .onSizeChanged { onCanvasSize(it) },
-          contentAlignment = Alignment.Center,
-      ) {
-        Surface(shadowElevation = 2.dp, color = Color.White) {
-          Box(modifier = Modifier.size(canvasWidth, canvasHeight)) {
-            // Alignment guides overlay (also draws the image/text)
-            Canvas(modifier = Modifier.size(canvasWidth, canvasHeight)) {
-              drawIntoCanvas {
-                renderer.draw(
-                    canvas = it.nativeCanvas,
-                    customizer = state.customizer,
-                    layers = state.layers,
-                    selectedLayerId = state.selectedLayerId,
-                )
-              }
-
-              val localLayerBounds = layerBounds
-
-              if (
-                  state.selectedLayerId != null &&
-                      isDragging &&
-                      localLayerBounds != null &&
-                      state.canvasSize != IntSize.Zero
-              ) {
-                val canvasWidthPx = state.canvasSize.width.toFloat()
-                val canvasHeightPx = state.canvasSize.height.toFloat()
-
-                val centerX = canvasWidthPx / 2f
-                val centerY = canvasHeightPx / 2f
-
-                val left = 0f
-                val top = 0f
-
-                val layerLeft = localLayerBounds.centerX - localLayerBounds.width / 2f
-                val layerRight = localLayerBounds.centerX + localLayerBounds.width / 2f
-                val layerTop = localLayerBounds.centerY - localLayerBounds.height / 2f
-
-                val threshold = AlignmentConstants.ALIGNMENT_THRESHOLD_PX
-                val color = Color(AlignmentConstants.GUIDE_LINE_COLOR)
-                val strokeWidth = AlignmentConstants.GUIDE_LINE_WIDTH_PX
-
-                val pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f), 0f)
-
-                // Vertical center line
-                if (abs(localLayerBounds.centerX - centerX) <= threshold) {
-                  drawLine(
-                      color = color,
-                      start = Offset(centerX, 0f),
-                      end = Offset(centerX, canvasHeightPx),
-                      strokeWidth = strokeWidth,
-                      pathEffect = pathEffect,
+      Box(modifier = Modifier.size(canvasWidth, canvasHeight)) {
+        Box(
+            modifier =
+                Modifier.border(width = 2.dp, color = Color.Gray.copy(alpha = 0.4f))
+                    .size(width = canvasWidth, height = canvasHeight)
+                    .onSizeChanged { onCanvasSize(it) },
+            contentAlignment = Alignment.Center,
+        ) {
+          Surface(shadowElevation = 2.dp, color = Color.White) {
+            Box(modifier = Modifier.size(canvasWidth, canvasHeight)) {
+              Canvas(modifier = Modifier.size(canvasWidth, canvasHeight)) {
+                drawIntoCanvas {
+                  renderer.draw(
+                      canvas = it.nativeCanvas,
+                      customizer = state.customizer,
+                      layers = state.layers,
+                      selectedLayerId = state.selectedLayerId,
                   )
                 }
 
-                // Horizontal center line
-                if (abs(localLayerBounds.centerY - centerY) <= threshold) {
-                  drawLine(
-                      color = color,
-                      start = Offset(0f, centerY),
-                      end = Offset(canvasWidthPx, centerY),
-                      strokeWidth = strokeWidth,
-                      pathEffect = pathEffect,
-                  )
-                }
+                val localLayerBounds = layerBounds
 
-                // Left edge line
-                if (abs(layerLeft - left) <= threshold) {
-                  drawLine(
-                      color = color,
-                      start = Offset(left, 0f),
-                      end = Offset(left, canvasHeightPx),
-                      strokeWidth = strokeWidth,
-                      pathEffect = pathEffect,
-                  )
-                }
+                if (
+                    state.selectedLayerId != null &&
+                        isDragging &&
+                        localLayerBounds != null &&
+                        state.canvasSize != IntSize.Zero
+                ) {
+                  val canvasWidthPx = state.canvasSize.width.toFloat()
+                  val canvasHeightPx = state.canvasSize.height.toFloat()
 
-                // Right edge line
-                if (abs(layerRight - canvasWidthPx) <= threshold) {
-                  drawLine(
-                      color = color,
-                      start = Offset(canvasWidthPx, 0f),
-                      end = Offset(canvasWidthPx, canvasHeightPx),
-                      strokeWidth = strokeWidth,
-                      pathEffect = pathEffect,
-                  )
-                }
+                  val centerX = canvasWidthPx / 2f
+                  val centerY = canvasHeightPx / 2f
 
-                // Top edge line
-                if (abs(layerTop - top) <= threshold) {
-                  drawLine(
-                      color = color,
-                      start = Offset(0f, top),
-                      end = Offset(canvasWidthPx, top),
-                      strokeWidth = strokeWidth,
-                      pathEffect = pathEffect,
-                  )
-                }
-              }
-            }
+                  val left = 0f
+                  val top = 0f
 
-            GestureBox(
-                width = canvasWidth,
-                height = canvasHeight,
-                canvasWidthPx = with(LocalDensity.current) { canvasWidth.toPx() },
-                canvasHeightPx = with(LocalDensity.current) { canvasHeight.toPx() },
-                state = state,
-                onTapped = { reset() },
-                onLayerTapped = onLayerTapped,
-                onUpdateLayer = onUpdateLayer,
-                onDragStateChange = { dragging -> isDragging = dragging },
-                onLayerBoundsChange = { layerBounds = it },
-                onDoubleTap = { reset() },
-                onTextLayerEdit = { textLayer ->
-                  editingLayer = textLayer
+                  val layerLeft = localLayerBounds.centerX - localLayerBounds.width / 2f
+                  val layerRight = localLayerBounds.centerX + localLayerBounds.width / 2f
+                  val layerTop = localLayerBounds.centerY - localLayerBounds.height / 2f
 
-                  editingText =
-                      TextFieldValue(
-                          text = textLayer.text,
-                          selection = TextRange(textLayer.text.length),
-                      )
+                  val threshold = AlignmentConstants.ALIGNMENT_THRESHOLD_PX
+                  val color = Color(AlignmentConstants.GUIDE_LINE_COLOR)
+                  val strokeWidth = AlignmentConstants.GUIDE_LINE_WIDTH_PX
 
-                  selectedColor = textLayer.color
-                  isBold = textLayer.fontWeight == FontWeight.Bold
-                  isItalic = textLayer.fontStyle == FontStyle.Italic
-                },
-                onImageLayerLongPress = { layerId -> viewModel.showDeleteIconFor(layerId) },
-                viewModel = viewModel,
-            )
+                  val pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f), 0f)
 
-            // Delete icon overlay (sticks to top-right of image layer)
-            viewModel.showDeleteIconForLayer.value?.let { layerId ->
-              val layer = state.layers.firstOrNull { it.id == layerId } ?: return@let
-              val transform = layer.transform
-
-              val bitmapSize =
-                  when (layer) {
-                    is ImageLayer -> {
-                      val bitmap = layer.bitmap ?: return@let
-                      IntSize(bitmap.width, bitmap.height)
-                    }
-                    is TextLayer -> {
-                      val bitmap = layer.bitmap ?: return@let
-                      IntSize(bitmap.width, bitmap.height)
-                    }
+                  if (abs(localLayerBounds.centerX - centerX) <= threshold) {
+                    drawLine(
+                        color = color,
+                        start = Offset(centerX, 0f),
+                        end = Offset(centerX, canvasHeightPx),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect,
+                    )
                   }
 
-              val width = bitmapSize.width * transform.scale
-              val height = bitmapSize.height * transform.scale
+                  if (abs(localLayerBounds.centerY - centerY) <= threshold) {
+                    drawLine(
+                        color = color,
+                        start = Offset(0f, centerY),
+                        end = Offset(canvasWidthPx, centerY),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect,
+                    )
+                  }
 
-              if (width <= 0f || height <= 0f) return@let
+                  if (abs(layerLeft - left) <= threshold) {
+                    drawLine(
+                        color = color,
+                        start = Offset(left, 0f),
+                        end = Offset(left, canvasHeightPx),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect,
+                    )
+                  }
 
-              // Position at top-right corner of the image
-              val iconX = transform.x + (width / 2f)
-              val iconY = transform.y - (height / 2f)
+                  if (abs(layerRight - canvasWidthPx) <= threshold) {
+                    drawLine(
+                        color = color,
+                        start = Offset(canvasWidthPx, 0f),
+                        end = Offset(canvasWidthPx, canvasHeightPx),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect,
+                    )
+                  }
 
-              Box(
-                  modifier =
-                      Modifier.offset(
-                              x = with(density) { iconX.toDp() },
-                              y = with(density) { iconY.toDp() },
-                          )
-                          .size(25.dp)
-                          .background(Color(0xFFE53935), shape = CircleShape) // Red background
-                          .clickable(
-                              enabled = true,
-                              onClick = {
-                                viewModel.removeLayer(layerId)
-                                viewModel.hideDeleteIcon()
-                              },
-                          ),
-                  contentAlignment = Alignment.Center,
-              ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_cancel2),
-                    contentDescription = "Delete Layer",
-                    tint = Color.White,
-                    modifier = Modifier.size(25.dp),
-                )
+                  if (abs(layerTop - top) <= threshold) {
+                    drawLine(
+                        color = color,
+                        start = Offset(0f, top),
+                        end = Offset(canvasWidthPx, top),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect,
+                    )
+                  }
+                }
+              }
+
+              GestureBox(
+                  width = canvasWidth,
+                  height = canvasHeight,
+                  canvasWidthPx = with(LocalDensity.current) { canvasWidth.toPx() },
+                  canvasHeightPx = with(LocalDensity.current) { canvasHeight.toPx() },
+                  state = state,
+                  onTapped = { reset() },
+                  onLayerTapped = onLayerTapped,
+                  onUpdateLayer = onUpdateLayer,
+                  onDragStateChange = { dragging -> isDragging = dragging },
+                  onLayerBoundsChange = { layerBounds = it },
+                  onDoubleTap = { reset() },
+                  onTextLayerEdit = { textLayer ->
+                    editingLayer = textLayer
+
+                    editingText =
+                        TextFieldValue(
+                            text = textLayer.text,
+                            selection = TextRange(textLayer.text.length),
+                        )
+
+                    selectedColor = textLayer.color
+                    isBold = textLayer.fontWeight == FontWeight.Bold
+                    isItalic = textLayer.fontStyle == FontStyle.Italic
+                  },
+                  onImageLayerLongPress = { layerId -> viewModel.showDeleteIconFor(layerId) },
+                  viewModel = viewModel,
+              )
+
+              viewModel.showDeleteIconForLayer.value?.let { layerId ->
+                val layer = state.layers.firstOrNull { it.id == layerId } ?: return@let
+                val transform = layer.transform
+
+                val bitmapSize =
+                    when (layer) {
+                      is ImageLayer -> {
+                        val bitmap = layer.bitmap ?: return@let
+                        IntSize(bitmap.width, bitmap.height)
+                      }
+
+                      is TextLayer -> {
+                        val bitmap = layer.bitmap ?: return@let
+                        IntSize(bitmap.width, bitmap.height)
+                      }
+                    }
+
+                val width = bitmapSize.width * transform.scale
+                val height = bitmapSize.height * transform.scale
+
+                if (width <= 0f || height <= 0f) return@let
+
+                val iconX = transform.x + (width / 2f)
+                val iconY = transform.y - (height / 2f)
+
+                Box(
+                    modifier =
+                        Modifier.offset(
+                                x = with(density) { iconX.toDp() },
+                                y = with(density) { iconY.toDp() },
+                            )
+                            .size(25.dp)
+                            .background(Color(0xFFE53935), shape = CircleShape)
+                            .clickable(
+                                enabled = true,
+                                onClick = {
+                                  viewModel.removeLayer(layerId)
+                                  viewModel.hideDeleteIcon()
+                                },
+                            ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                  Icon(
+                      painter = painterResource(id = R.drawable.ic_cancel2),
+                      contentDescription = "Delete Layer",
+                      tint = Color.White,
+                      modifier = Modifier.size(25.dp),
+                  )
+                }
               }
             }
           }
         }
       }
+      if (textModeEnabled) {
+        LaunchedEffect(state.canvasSize) {
+          if (state.canvasSize != IntSize.Zero) {
+            viewModel.addTextLayer(
+                text = "",
+                color = Color.Black,
+                fontWeight = FontWeight.Normal,
+                fontStyle = FontStyle.Normal,
+                canvasWidthInPx = state.canvasSize.width.toFloat(),
+                canvasHeightInPx = state.canvasSize.height.toFloat(),
+            )
+            val newLayer = viewModel.getSelectedTextLayer()
+            newLayer?.let {
+              editingLayer = it
+              editingText = TextFieldValue("")
+              selectedColor = Color.Black
+              isBold = false
+              isItalic = false
+            }
+
+            onTextModeExit()
+          }
+        }
+      }
     }
+
     editingLayer?.let {
       Column(
           modifier = Modifier.fillMaxSize().imePadding(),
@@ -386,10 +408,10 @@ fun EditorCanvas(
         ) {
           TextField(
               value = editingText,
-              onValueChange = { if (it.text.isNotBlank()) editingText = it },
+              onValueChange = { editingText = it },
               modifier =
                   Modifier.weight(1f)
-                      .height(56.dp) // ✅ fixed height
+                      .height(56.dp)
                       .padding(horizontal = 8.dp)
                       .focusRequester(textFieldFocusRequester),
               singleLine = true,
@@ -399,7 +421,7 @@ fun EditorCanvas(
           )
 
           IconButton(
-              modifier = Modifier.size(48.dp), // optional: consistent size
+              modifier = Modifier.size(48.dp),
               onClick = { isBold = !isBold },
               shape = RoundedCornerShape(8.dp),
               colors =
