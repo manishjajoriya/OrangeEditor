@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.ruhaan.orangeeditor.domain.model.layer.ExportResult
 import com.ruhaan.orangeeditor.domain.model.layer.NeutralAdjustment
-import com.ruhaan.orangeeditor.presentation.editor.components.AddTextSheet
 import com.ruhaan.orangeeditor.presentation.editor.components.AdjustmentsSheet
 import com.ruhaan.orangeeditor.presentation.editor.components.EditorBottomBar
 import com.ruhaan.orangeeditor.presentation.editor.components.EditorCanvas
@@ -60,10 +59,10 @@ fun EditorScreen(
   val context = LocalContext.current
   val exportResult by viewModel.exportResult.collectAsState()
 
+  var textModeEnabled by remember { mutableStateOf(false) }
+
   // Local states
   var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-  var showAddTextSheet by remember { mutableStateOf(false) }
-  var isAddingNewText by remember { mutableStateOf(true) } // true = add, false = edit
   var showImageFilters by remember { mutableStateOf(false) }
   var showAdjustmentsSheet by remember { mutableStateOf(false) }
   var showFileNameSheet by remember { mutableStateOf(false) }
@@ -100,22 +99,6 @@ fun EditorScreen(
         }
     context.startActivity(Intent.createChooser(shareIntent, "Share image"))
   }
-
-  if (showAddTextSheet)
-      AddTextSheet(
-          onDismissRequest = { showAddTextSheet = false },
-          isNew = isAddingNewText,
-          onTextAdd = { text, fontColor, fontWeight, fontStyle ->
-            viewModel.addTextLayer(
-                text = text,
-                color = fontColor,
-                fontWeight = fontWeight,
-                fontStyle = fontStyle,
-                canvasWidthInPx = canvasSize.width.toFloat(),
-                canvasHeightInPx = canvasSize.height.toFloat(),
-            )
-          },
-      )
 
   if (showAdjustmentsSheet) {
     AdjustmentsSheet(
@@ -218,10 +201,7 @@ fun EditorScreen(
                     canvasHeightInPx = canvasSize.height.toFloat(),
                 )
               },
-              onAddTextClick = {
-                isAddingNewText = true
-                showAddTextSheet = true
-              },
+              onAddTextClick = { textModeEnabled = true },
               onFilterClick = { showImageFilters = !showImageFilters },
               onAdjustmentsClick = { showAdjustmentsSheet = true },
               onCropClick = { navController.navigate(Route.CropScreen.route) },
@@ -246,8 +226,11 @@ fun EditorScreen(
           onUpdateLayer = viewModel::updateLayer,
           onUpdateSelectedTextLayer = viewModel::updateSelectedTextLayer,
           onLayerTapped = viewModel::selectedLayer,
+          textModeEnabled = textModeEnabled,
+          onTextModeExit = { textModeEnabled = false },
           viewModel = viewModel,
       )
+
       if (loadingImage) {
         Column(
             modifier = Modifier.fillMaxSize(),
