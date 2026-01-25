@@ -48,7 +48,8 @@ fun NavGraph(
 
       BackHandler(enabled = true) {
         if (backPressedOnce) {
-          navController.popBackStack()
+          navController.clearBackStack<String>()
+          navController.navigate(Route.Home.route)
           viewmodel.saveDraft()
           viewmodel.resetState()
         } else {
